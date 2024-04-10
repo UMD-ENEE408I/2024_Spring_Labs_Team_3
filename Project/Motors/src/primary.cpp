@@ -1,3 +1,7 @@
+
+#include <WiFi.h>
+#include <sys/socket.h>
+
 #include <Arduino.h>
 
 #include <Adafruit_MCP3008.h>
@@ -34,6 +38,30 @@ int adc2_buf[8];
 
 float mid = 6;
 int base_pid = 450;
+
+
+  // The mode is incremented each time the robot hits a fat block -PK
+
+  // We start in mode 0
+  /*
+  Mode 0: Line of the republic (Forward movement)
+
+  Mode 1: Maze of mandalore (Searching algorithm w/ GPU)
+
+  Mode 2: Kessel run (PID movement)
+
+  Mode 3: Hoth Asteroid Field (Avoidance of obstacles mode w/ GPU)
+
+  Mode 4: Path of dual fates (Microphone and audio localization w/ GPU)
+
+  Mode 5: Endor Dash (Forward movement)
+  
+  
+  
+  
+  */
+  int mode = 0;
+
 
 uint8_t lineArray[13]; 
 float previousPosition = 6;
@@ -107,6 +135,27 @@ void digitalConvert(){
   }
 }
 
+
+
+// Command to turn the robot left upon detecting a mode change block
+// Stops the left motor and guns the right motor to turn left
+void MODE_CHANGE_BLOCK_LEFT(){
+
+  M1_stop();
+  M2_forward(PWM_VALUE);
+
+}
+
+
+// Command to turn the robot right upon detecting a mode change block
+// Stops the right motor and guns the left motor to turn right
+void MODE_CHANGE_BLOCK_RIGHT(){
+
+  M2_stop();
+  M1_forward(PWM_VALUE);
+
+}
+
 float getPosition(float previousPosition) {
   
   float pos = 0;
@@ -127,9 +176,40 @@ float getPosition(float previousPosition) {
 }
 
 
+void
 
 
 
+
+void RUN_PID(float previousPosition, float mid){
+
+  digitalConvert();
+
+  float pos = getPosition(previousPosition);
+  previousPosition = pos;
+
+   error = pos - mid;
+   total_error += error;
+
+   int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
+   int right_motor = base_pid + pid_value;
+   int left_motor = base_pid - pid_value;
+
+   M1_forward(left_motor);
+   M2_forward(right_motor);
+
+}
+
+
+// WIFI STUFF
+
+// Change this stuff later
+
+const char* ssid = "Elink"; // Name of Network
+const char* password = "David!Kristina"; // Network Password
+
+
+int DO_MODE_CHANGE_BLOCK(int mode, int )
 
 
 void setup() {
@@ -162,6 +242,45 @@ void setup() {
   pinMode(M2_I_SENSE, INPUT);
 
 
+
+    // WIFI STUFF
+
+    delay(1000);
+    // Connecting to Mutual WiFi Network
+    WiFi.mode(WIFI_STA); //Optional
+    WiFi.begin(ssid, password);
+    Serial.println("\nConnecting");
+
+    while(WiFi.status() != WL_CONNECTED){
+        Serial.print(".");
+        delay(100);
+    }
+    Serial.println("\nConnected to the WiFi network");
+    Serial.print("Local ESP32 IP: ");
+    Serial.println(WiFi.localIP());
+    // SERVER SOCKET SECTION *************************
+    // Used when Nvidia Sends Messages -> Heltec
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0); 
+    sockaddr_in serverAddress; 
+    serverAddress.sin_family = AF_INET; 
+    serverAddress.sin_port = htons(8000); 
+    String ipString = WiFi.localIP().toString();
+    serverAddress.sin_addr.s_addr = inet_addr(ipString.c_str()); 
+    // binding socket. 
+    bind(serverSocket, (struct sockaddr*)&serverAddress, 
+         sizeof(serverAddress)); 
+    listen(serverSocket, 5); 
+    // accepting connection request 
+    int clientSocket = accept(serverSocket, nullptr, nullptr); 
+  
+    // recieving data 
+    char buffer[1024] = { 0 }; 
+    recv(clientSocket, buffer, sizeof(buffer), 0); 
+    Serial.println(buffer);
+
+    // closing the socket. 
+    close(serverSocket);
+
 }
 
 void loop() {
@@ -170,33 +289,14 @@ void loop() {
   readADC();
   int t_end = micros();
 
-  digitalConvert();
-
-  float pos = getPosition(previousPosition);
-  previousPosition = pos;
-
-   error = pos - mid;
-   total_error += error;
-
-   int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
-   int right_motor = base_pid + pid_value;
-   int left_motor = base_pid - pid_value;
-
-   M1_forward(left_motor);
-   M2_forward(right_motor);
-
-
-  int mode = 0;
 
 
 
-  // The mode is switched each time the robot hits a fat block -PK
 
 
- 
+
 
   //Put switch statements here for modes
-
 switch(mode) {
 
   // START - GUN IT FORWARD
