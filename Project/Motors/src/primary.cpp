@@ -27,7 +27,7 @@ const unsigned int M2_I_SENSE = 34;
 
 // const float M_I_COUNTS_TO_A = (3.3 / 1024.0) / 0.120;
 
-const unsigned int PWM_VALUE = 512; // Max PWM given 8 bit resolution
+const unsigned int PWM_VALUE = 1023; // Max PWM given 8 bit resolution
 
 const int freq = 5000;
 const int ledChannel = 0;
@@ -75,8 +75,8 @@ float Kp = 25;
 float Kd = 500;
 float Ki = 0.01;
 
-void M1_backward() {
-  ledcWrite(M1_IN_1_CHANNEL, PWM_VALUE);
+void M1_backward(int pwm_value) {
+  ledcWrite(M1_IN_1_CHANNEL, pwm_value);
   ledcWrite(M1_IN_2_CHANNEL, 0);
 }
 
@@ -90,8 +90,8 @@ void M1_stop() {
   ledcWrite(M1_IN_2_CHANNEL, PWM_VALUE);
 }
 
-void M2_backward() {
-  ledcWrite(M2_IN_1_CHANNEL, PWM_VALUE);
+void M2_backward(int pwm_value) {
+  ledcWrite(M2_IN_1_CHANNEL, pwm_value);
   ledcWrite(M2_IN_2_CHANNEL, 0);
 }
 
@@ -112,6 +112,13 @@ void readADC() {
     adc2_buf[i] = adc2.readADC(i);
   }
 }
+
+
+/*
+digitalConvert() reads the values of the sensors from adc1_buf and adc2_buf
+and stores them as a 1 or 0 into lineArray[0 -> 13]
+
+*/
 
 void digitalConvert(){
   for (int i = 0; i < 7; i++) {
@@ -151,6 +158,7 @@ void MODE_CHANGE_BLOCK_LEFT(){
 // Stops the right motor and guns the left motor to turn right
 void MODE_CHANGE_BLOCK_RIGHT(){
 
+
   M2_stop();
   M1_forward(PWM_VALUE);
 
@@ -174,11 +182,6 @@ float getPosition(float previousPosition) {
   }
   return pos/white_count;
 }
-
-
-void
-
-
 
 
 void RUN_PID(float previousPosition, float mid){
@@ -208,8 +211,98 @@ void RUN_PID(float previousPosition, float mid){
 const char* ssid = "Elink"; // Name of Network
 const char* password = "David!Kristina"; // Network Password
 
+/*
+CHECK_MODE_CHANGE checks all of the sensors are white- which signifies the NEXT mode, creep forward and check
+*/
+int CHECK_MODE_CHANGE(){
 
-int DO_MODE_CHANGE_BLOCK(int mode, int )
+  if (lineArray[0] & lineArray[1] & lineArray[2] & lineArray[3] & lineArray[4] & lineArray[5] & lineArray[6] & lineArray[7] & lineArray[8]
+   & lineArray[9] & lineArray[10] & lineArray[11] & lineArray[12]){
+
+
+    /*
+    
+    wait()
+    Creep forward 
+
+    M1_stop();
+    M2_stop();
+    */
+
+    return 1;
+
+   }
+   else{
+
+    return 0;
+
+   }
+
+}
+
+
+/*
+THIS MODE JUST FOLLOWS A STRAIGHT LINE WITH 90 degree turns
+
+*/
+void MOVE_LINEAR(){
+
+  digitalConvert();
+
+  /*
+  MOVE AT A SLOWER PACE TO DEAL WITH 90 DEGREE TURNS
+  */
+  M1_forward(PWM_VALUE/2);
+  
+  M2_forward(PWM_VALUE/2);
+
+  /*
+  MOVE FORWARD FOR 1 SECOND
+  */
+  sleep(1000);
+
+
+
+  /*
+  GO STRAIGHT
+  */
+ if (!lineArray[0] & !lineArray[1] & !lineArray[2] & !lineArray[3] & !lineArray[4] & lineArray[5] & lineArray[6] & !lineArray[7] & !lineArray[8]
+   & !lineArray[9] & !lineArray[10] & !lineArray[11] & !lineArray[12]){
+  M1_forward(PWM_VALUE/2);
+  
+  M2_forward(PWM_VALUE/2);
+
+  sleep(1000);
+
+}
+/*
+TURN LEFT (WHITE ON LEFT SIDE, BLACK ON RIGHT SIDE)
+*/
+else if (lineArray[0] & lineArray[1] & lineArray[2] & lineArray[3] & lineArray[4] & lineArray[5] & lineArray[6] & !lineArray[7] & !lineArray[8]
+   & !lineArray[9] & !lineArray[10] & !lineArray[11] & !lineArray[12]){
+
+    //
+    M1_backward(PWM_VALUE/2);
+    M2_forward(PWM_VALUE/2);
+
+    sleep(1000);
+
+
+   }
+
+
+/*
+TURN RIGHT 90 DEGREES (BLACK ON LEFT SIDE, WHITE ON RIGHT SIDE)
+*/
+else if (!lineArray[0] & !lineArray[1] & !lineArray[2] & !lineArray[3] & !lineArray[4] & !lineArray[5] & !lineArray[6] & !lineArray[7] & lineArray[8]
+   & lineArray[9] & lineArray[10] & lineArray[11] & lineArray[12]){
+
+  sleep(1000);
+
+   }
+
+
+}
 
 
 void setup() {
@@ -283,6 +376,20 @@ void setup() {
 
 }
 
+/*
+  Mode 0: Line of the republic (Forward movement)
+
+  Mode 1: Maze of mandalore (Searching algorithm w/ GPU)
+
+  Mode 2: Kessel run (PID movement)
+
+  Mode 3: Hoth Asteroid Field (Avoidance of obstacles mode w/ GPU)
+
+  Mode 4: Path of dual fates (Microphone and audio localization w/ GPU)
+
+  Mode 5: Endor Dash (Forward movement)
+  */
+
 void loop() {
 
   int t_start = micros();
@@ -290,17 +397,26 @@ void loop() {
   int t_end = micros();
 
 
-
-
-
-
-
-
   //Put switch statements here for modes
 switch(mode) {
 
   // START - GUN IT FORWARD
   case 0:
+  
+
+    /*
+    RUN THE PID CONTROLLER UNTIL ALL SENSORS TURN WHITE
+    */
+    while (~CHECK_MODE_CHANGE()){
+
+      RUN_PID(previousPosition, mid);
+
+    }
+
+    /*
+    TURN RIGHT AND MOVE
+    */
+    MODE_CHANGE_BLOCK_RIGHT;
 
     // ALL MOTORS FORWARD
     // PID CONTROLLER
@@ -309,6 +425,8 @@ switch(mode) {
 
   // MAZE OF MANDALORE - MAZE MODE (PRIMARY GUNS FORWARD)
   case 1:
+
+
 
     // THE PRIMARY ROBOT SKIPS ALL OF THIS 
 
