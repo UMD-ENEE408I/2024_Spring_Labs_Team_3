@@ -4,14 +4,27 @@
 
 #include <Arduino.h>
 
+#include <Encoder.h>
+
 #include <Adafruit_MCP3008.h>
 
 Adafruit_MCP3008 adc1;
 Adafruit_MCP3008 adc2;
 
+/*
+ENCODER PINS
+*/
+const unsigned int M1_ENC_A = 39;
+const unsigned int M1_ENC_B = 38;
+const unsigned int M2_ENC_A = 37;
+const unsigned int M2_ENC_B = 36;
+
 const unsigned int ADC_1_CS = 2;
 const unsigned int ADC_2_CS = 17;
 
+/*
+MOTOR PINS
+*/
 const unsigned int M1_IN_1 = 13;
 const unsigned int M1_IN_2 = 12;
 const unsigned int M2_IN_1 = 25;
@@ -37,7 +50,12 @@ int adc1_buf[8];
 int adc2_buf[8];
 
 float mid = 6;
-int base_pid = 450;
+
+
+/*
+STOP if TRUE
+*/
+bool status = false;
 
 
   // The mode is incremented each time the robot hits a fat block -PK
@@ -60,8 +78,6 @@ int base_pid = 450;
   
   
   */
-  int mode = 0;
-
 
 uint8_t lineArray[13]; 
 float previousPosition = 6;
@@ -71,7 +87,9 @@ float error;
 float last_error;
 float total_error;
 
-float Kp = 25;
+int base_pid = 400;
+
+float Kp = 10;
 float Kd = 500;
 float Ki = 0.01;
 
@@ -104,7 +122,6 @@ void M2_stop() {
   ledcWrite(M2_IN_1_CHANNEL, PWM_VALUE);
   ledcWrite(M2_IN_2_CHANNEL, PWM_VALUE);
 }
-
 
 void readADC() {
   for (int i = 0; i < 8; i++) {
@@ -149,7 +166,11 @@ void digitalConvert(){
 void MODE_CHANGE_BLOCK_LEFT(){
 
   M1_stop();
-  M2_forward(PWM_VALUE);
+  M2_forward(PWM_VALUE/4);
+
+  delay(500);
+
+
 
 }
 
@@ -159,10 +180,19 @@ void MODE_CHANGE_BLOCK_LEFT(){
 void MODE_CHANGE_BLOCK_RIGHT(){
 
 
+  /*
+  ARC RIGHT (NEEDS TO BE FINE TUNED)
+  */
   M2_stop();
-  M1_forward(PWM_VALUE);
+  M1_forward(PWM_VALUE/4);
+
+  delay(100);
+
+
 
 }
+
+
 
 float getPosition(float previousPosition) {
   
@@ -184,32 +214,13 @@ float getPosition(float previousPosition) {
 }
 
 
-void RUN_PID(float previousPosition, float mid){
-
-  digitalConvert();
-
-  float pos = getPosition(previousPosition);
-  previousPosition = pos;
-
-   error = pos - mid;
-   total_error += error;
-
-   int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
-   int right_motor = base_pid + pid_value;
-   int left_motor = base_pid - pid_value;
-
-   M1_forward(left_motor);
-   M2_forward(right_motor);
-
-}
-
 
 // WIFI STUFF
 
 // Change this stuff later
 
-const char* ssid = "Elink"; // Name of Network
-const char* password = "David!Kristina"; // Network Password
+// const char* ssid = "Elink"; // Name of Network
+// const char* password = "David!Kristina"; // Network Password
 
 /*
 CHECK_MODE_CHANGE checks all of the sensors are white- which signifies the NEXT mode, creep forward and check
@@ -219,15 +230,6 @@ int CHECK_MODE_CHANGE(){
   if (lineArray[0] & lineArray[1] & lineArray[2] & lineArray[3] & lineArray[4] & lineArray[5] & lineArray[6] & lineArray[7] & lineArray[8]
    & lineArray[9] & lineArray[10] & lineArray[11] & lineArray[12]){
 
-
-    /*
-    
-    wait()
-    Creep forward 
-
-    M1_stop();
-    M2_stop();
-    */
 
     return 1;
 
@@ -268,9 +270,9 @@ void MOVE_LINEAR(){
   */
  if (!lineArray[0] & !lineArray[1] & !lineArray[2] & !lineArray[3] & !lineArray[4] & lineArray[5] & lineArray[6] & !lineArray[7] & !lineArray[8]
    & !lineArray[9] & !lineArray[10] & !lineArray[11] & !lineArray[12]){
-  M1_forward(PWM_VALUE/2);
+  M1_forward(PWM_VALUE/4);
   
-  M2_forward(PWM_VALUE/2);
+  M2_forward(PWM_VALUE/4);
 
   sleep(1000);
 
@@ -281,12 +283,14 @@ TURN LEFT (WHITE ON LEFT SIDE, BLACK ON RIGHT SIDE)
 else if (lineArray[0] & lineArray[1] & lineArray[2] & lineArray[3] & lineArray[4] & lineArray[5] & lineArray[6] & !lineArray[7] & !lineArray[8]
    & !lineArray[9] & !lineArray[10] & !lineArray[11] & !lineArray[12]){
 
-    //
+
+    /*
+    ZERO POINT TURN
+    */
     M1_backward(PWM_VALUE/2);
     M2_forward(PWM_VALUE/2);
 
     sleep(1000);
-
 
    }
 
@@ -297,7 +301,14 @@ TURN RIGHT 90 DEGREES (BLACK ON LEFT SIDE, WHITE ON RIGHT SIDE)
 else if (!lineArray[0] & !lineArray[1] & !lineArray[2] & !lineArray[3] & !lineArray[4] & !lineArray[5] & !lineArray[6] & !lineArray[7] & lineArray[8]
    & lineArray[9] & lineArray[10] & lineArray[11] & lineArray[12]){
 
-  sleep(1000);
+
+    /*
+    ZERO POINT TURN
+    */
+    M1_backward(PWM_VALUE/2);
+    M2_forward(PWM_VALUE/2);
+
+    sleep(1000);
 
    }
 
@@ -309,8 +320,6 @@ void setup() {
   // Stop the right motor by setting pin 14 low
   // this pin floats high or is pulled
   // high during the bootloader phase for some reason
-
-
 
   pinMode(14, OUTPUT);
   digitalWrite(14, LOW);
@@ -334,45 +343,47 @@ void setup() {
   pinMode(M1_I_SENSE, INPUT);
   pinMode(M2_I_SENSE, INPUT);
 
+  delay(2000);
+
 
 
     // WIFI STUFF
 
-    delay(1000);
-    // Connecting to Mutual WiFi Network
-    WiFi.mode(WIFI_STA); //Optional
-    WiFi.begin(ssid, password);
-    Serial.println("\nConnecting");
+    // delay(1000);
+    // // Connecting to Mutual WiFi Network
+    // WiFi.mode(WIFI_STA); //Optional
+    // WiFi.begin(ssid, password);
+    // Serial.println("\nConnecting");
 
-    while(WiFi.status() != WL_CONNECTED){
-        Serial.print(".");
-        delay(100);
-    }
-    Serial.println("\nConnected to the WiFi network");
-    Serial.print("Local ESP32 IP: ");
-    Serial.println(WiFi.localIP());
-    // SERVER SOCKET SECTION *************************
-    // Used when Nvidia Sends Messages -> Heltec
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0); 
-    sockaddr_in serverAddress; 
-    serverAddress.sin_family = AF_INET; 
-    serverAddress.sin_port = htons(8000); 
-    String ipString = WiFi.localIP().toString();
-    serverAddress.sin_addr.s_addr = inet_addr(ipString.c_str()); 
-    // binding socket. 
-    bind(serverSocket, (struct sockaddr*)&serverAddress, 
-         sizeof(serverAddress)); 
-    listen(serverSocket, 5); 
-    // accepting connection request 
-    int clientSocket = accept(serverSocket, nullptr, nullptr); 
+    // while(WiFi.status() != WL_CONNECTED){
+    //     Serial.print(".");
+    //     delay(100);
+    // }
+    // Serial.println("\nConnected to the WiFi network");
+    // Serial.print("Local ESP32 IP: ");
+    // Serial.println(WiFi.localIP());
+    // // SERVER SOCKET SECTION *************************
+    // // Used when Nvidia Sends Messages -> Heltec
+    // int serverSocket = socket(AF_INET, SOCK_STREAM, 0); 
+    // sockaddr_in serverAddress; 
+    // serverAddress.sin_family = AF_INET; 
+    // serverAddress.sin_port = htons(8000); 
+    // String ipString = WiFi.localIP().toString();
+    // serverAddress.sin_addr.s_addr = inet_addr(ipString.c_str()); 
+    // // binding socket. 
+    // bind(serverSocket, (struct sockaddr*)&serverAddress, 
+    //      sizeof(serverAddress)); 
+    // listen(serverSocket, 5); 
+    // // accepting connection request 
+    // int clientSocket = accept(serverSocket, nullptr, nullptr); 
   
-    // recieving data 
-    char buffer[1024] = { 0 }; 
-    recv(clientSocket, buffer, sizeof(buffer), 0); 
-    Serial.println(buffer);
+    // // recieving data 
+    // char buffer[1024] = { 0 }; 
+    // recv(clientSocket, buffer, sizeof(buffer), 0); 
+    // Serial.println(buffer);
 
-    // closing the socket. 
-    close(serverSocket);
+    // // closing the socket. 
+    // close(serverSocket);
 
 }
 
@@ -392,108 +403,394 @@ void setup() {
 
 void loop() {
 
+  // Create the encoder objects after the motor has
+  // stopped, else some sort exception is triggered
+  Encoder enc1(M1_ENC_A, M1_ENC_B);
+  Encoder enc2(M2_ENC_A, M2_ENC_B);
+
+
+while(!status){
+
+
+  /*
+  
+  MODE 1: FORWARD LINE
+  
+  */
+
+
+
+/*
+START IN CENTER OF WHITE BLOCK
+ACTIVATE PID MOVEMENT WHEN NOT ALL SENSORS READ WHITE
+*/
+
+M1_forward(0.33*PWM_VALUE);
+M2_forward(0.33*PWM_VALUE);
+
+readADC();
+digitalConvert();
+
+while(CHECK_MODE_CHANGE()){
+
+readADC();
+digitalConvert();
+
+}
+
+M1_stop();
+M2_stop();
+
+
+/*
+RUN PID CONTROLLER UNTIL MODE CHANGE BLOCK IS HIT
+*/
+ while(!CHECK_MODE_CHANGE()){
+
+
+  /*
+  RUN PID CONTROLLER
+  */
+
   int t_start = micros();
   readADC();
   int t_end = micros();
 
+  
+  digitalConvert();
 
-  //Put switch statements here for modes
-switch(mode) {
 
-  // START - GUN IT FORWARD
-  case 0:
+  long enc1_value;
+  long enc2_value;
+
+  enc1.write(0);
+  enc2.write(0);
+
+  enc1_value = enc1.read();
+  enc2_value = -1*enc2.read();
+
+  float pos = getPosition(previousPosition);
+  previousPosition = pos;
+
+  error = pos - mid;
+  total_error += error;
+
+  int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
+  int right_motor = base_pid + pid_value;
+  int left_motor = base_pid - pid_value;
+
+  M1_forward(left_motor);
+  M2_forward(right_motor);
+
+  Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+  Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+  Serial.println();
+
+
+
+  Serial.print("here 21");
+
+
+  last_error = error;
+
+
+ }
+
+
+  /*
+  CHANGE MODE TO MAZE
+  */
+
+
+//MODE_CHANGE_BLOCK_RIGHT();
+
+
+}
+
+M1_stop();
+M2_stop();
+
+status = true;
+
+}
+
+
+
+/*
+MOVE LINEARLY
+*/
+// MOVE_LINEAR();
+
+
+
+// /*
+
+// MODE 2: MAZE
+
+// */
+
+// /*
+
+// PRIMARY ROBOT SKIPS THE MAZE
+
+// */
+
+// /*
+// RUN PID CONTROLLER UNTIL MODE CHANGE BLOCK IS HIT
+// */
+//  while(!CHECK_MODE_CHANGE()){
+
+
+//   /*
+//   RUN PID CONTROLLER
+//   */
+
+//   int t_start = micros();
+//   readADC();
+//   int t_end = micros();
+
+  
+//   digitalConvert();
+
+
+//   long enc1_value;
+//   long enc2_value;
+
+//   enc1.write(0);
+//   enc2.write(0);
+
+//   enc1_value = enc1.read();
+//   enc2_value = -1*enc2.read();
+
+//   float pos = getPosition(previousPosition);
+//   previousPosition = pos;
+
+//   error = pos - mid;
+//   total_error += error;
+
+//   int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
+//   int right_motor = base_pid + pid_value;
+//   int left_motor = base_pid - pid_value;
+
+//   M1_forward(left_motor);
+//   M2_forward(right_motor);
+
+//   Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+//   Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+//   Serial.println();
+
+
+//   last_error = error;
+
+
+//  }
+
+
+//   /*
+//   CHANGE MODE TO MAZE
+//   */
+// MODE_CHANGE_BLOCK_LEFT();
+
+// /*
+// RUN PID CONTROLLER AGAIN
+// */
+
+
+
+
+
+
+
+
+
+
+
+
+
+// }
+
+//  M1_stop();
+//  M2_stop();
+
+//  status = true;
+
+// }
+
+
+
+
+
+  /*
+  ENCODER STUFF
+  */
+
+ 
+  // while(true) {
+  //   long enc1_value = enc1.read();
+  //   long enc2_value = enc2.read();
+
+  //   if(status == false) {
+  //     M1_forward(512);
+  //     M2_forward(512);
+  //   } else {
+  //     M1_backward(512);
+  //     M2_backward(512);
+  //   }
+  //   if(enc1_value >= 360 || enc2_value >=360) {
+  //     M1_stop();
+  //     M2_stop();
+
+  //     if (status) {
+  //       status = false; 
+  //     } else {
+  //       status = true;
+  //     }
+  //     enc1.write(0);
+  //     enc2.write(0);
+
+  //     delay(5000);   
+  //   } 
+
+  //   Serial.print(enc1_value);
+  //   Serial.print("\t");
+  //   Serial.print(enc2_value);
+  //   Serial.print("\t");
+  //   Serial.print(status);
+  //   Serial.println();
+
+  // }
+
+
+
+
+
+
+
+
+
+//   //Put switch statements here for modes
+// switch(mode) {
+
+//   // START - GUN IT FORWARD
+//   case 0:
   
 
-    /*
-    RUN THE PID CONTROLLER UNTIL ALL SENSORS TURN WHITE
-    */
-    while (~CHECK_MODE_CHANGE()){
+//     /*
+//     RUN THE PID CONTROLLER UNTIL ALL SENSORS TURN WHITE
+//     */
+//     while (~CHECK_MODE_CHANGE()){
 
-      RUN_PID(previousPosition, mid);
+//       RUN_PID(previousPosition, mid);
 
-    }
+//     }
 
-    /*
-    TURN RIGHT AND MOVE
-    */
-    MODE_CHANGE_BLOCK_RIGHT;
+//     /*
+//     TURN RIGHT AND MOVE
+//     */
+//     MODE_CHANGE_BLOCK_RIGHT;
 
-    // ALL MOTORS FORWARD
-    // PID CONTROLLER
+//     // ALL MOTORS FORWARD
+//     // PID CONTROLLER
 
-    break;
+//     break;
 
-  // MAZE OF MANDALORE - MAZE MODE (PRIMARY GUNS FORWARD)
-  case 1:
-
-
-
-    // THE PRIMARY ROBOT SKIPS ALL OF THIS 
+//   // MAZE OF MANDALORE - MAZE MODE (PRIMARY GUNS FORWARD)
+//   case 1:
 
 
-    break;
+//     /*
+//     MOVE FORWARD
+//     */
+
+//     // THE PRIMARY ROBOT SKIPS ALL OF THIS 
 
 
-  // KESSEL RUN - PID CONTROLLER BROKEN PATH
-  case 2:
-
-    // TUNE PID CONTROLLER HERE
-
-    break;
-
-  //HOTH ASTEROID FIELD - AVOIDANCE MODE
-  case 3:
-
-    break;
+//     break;
 
 
-  // DUAL FATES - SOUND LOCALIZATION (PYTHON HERE)
-  case 4:
+//   // KESSEL RUN - PID CONTROLLER BROKEN PATH
+//   case 2:
 
-    //call python
+//     while (~CHECK_MODE_CHANGE()){
 
-    break;
+//       RUN_PID(previousPosition, mid);
+
+//     }
+
+
+//     break;
+
+//   //HOTH ASTEROID FIELD - AVOIDANCE MODE
+//   case 3:
+
+//     break;
+
+
+//   // DUAL FATES - SOUND LOCALIZATION (PYTHON HERE)
+//   case 4:
+
+//     //call python
+
+//     break;
   
-  // GUN IT
-  case 5:
+//   // GUN IT
+//   case 5:
 
-    // ALL MOTORS FORWARD
-    // PID CONTROLLER
+//     // ALL MOTORS FORWARD
+//     // PID CONTROLLER
+
+//         while (~CHECK_MODE_CHANGE()){
+
+//       RUN_PID(previousPosition, mid);
+
+//     }
 
 
-    break;
+//     break;
       
 
   
-  // ENDOR DASH - GUN IT FORWARD UNTIL HIT MODE CHANGE
-  case 6:
+//   // ENDOR DASH - GUN IT FORWARD UNTIL HIT MODE CHANGE
+//   case 6:
 
-    // ALL MOTORS FORWARD
-    // MAKE SURE TO LINE UP ROBOT ON THE LINE
+//     // ALL MOTORS FORWARD
+//     // MAKE SURE TO LINE UP ROBOT ON THE LINE
+
+//     while (~CHECK_MODE_CHANGE()){
+
+//       RUN_PID(previousPosition, mid);
+
+//     }
+
+//     break;
+
+//   // END ARENA- STOP
+//   case 7:
+
+//     // STOP ALL MOTORS
+
+//     M1_stop();
+//     M2_stop();
+
+//     break;
+// }
+
+// mode++;
+
+// // Serial.print("left: \t"); Serial.print(left_motor); Serial.print("\t");
+
+// // Serial.print("right: \t"); Serial.print(right_motor); Serial.print("\t");
+
+//   // Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+//   // Serial.print("pos: \t"); Serial.print(pos);
+//   // Serial.println();
+
+//   // M1_forward(512);
+//   // M2_forward(512);
+//   last_error = error;
+
+//   // delay(100);
+
+// }
 
 
-    break;
-
-  // END ARENA- STOP
-  case 7:
-
-    // STOP ALL MOTORS
-
-    break;
-}
-
-// Serial.print("left: \t"); Serial.print(left_motor); Serial.print("\t");
-
-// Serial.print("right: \t"); Serial.print(right_motor); Serial.print("\t");
-
-  // Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
-  // Serial.print("pos: \t"); Serial.print(pos);
-  // Serial.println();
-
-  // M1_forward(512);
-  // M2_forward(512);
-  last_error = error;
-
-  // delay(100);
-
-}
