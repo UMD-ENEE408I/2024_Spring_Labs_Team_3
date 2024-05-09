@@ -117,9 +117,11 @@ void loop() {
   Encoder enc2(M2_ENC_A, M2_ENC_B);
 
 
-/*   START_BLOCK();
+  START_BLOCK();
 
   MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
+
+  MOVE_FORWARD(2,90,enc1,enc2);
 
   SKIP_MAZE(enc1, enc2);
 
@@ -130,7 +132,7 @@ void loop() {
   ASTEROIDS( enc1 , enc2);
 
   MODE_CHANGE_BLOCK_RIGHT(enc1,enc2);
- */
+
 
   DUAL_FATES(enc1,enc2);
 
@@ -138,24 +140,13 @@ void loop() {
 
   MODE_1(90,6,120,0);
 
+  
+  MOVE_FORWARD(600,90,enc1, enc2);
+
+
   MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
 
-  MODE_2(4,90,6,100,0);
-
-  
-
-/*
-GUN FORWARD
-*/
- TILL_LINE_MOVE_FORWARD(255,enc1,enc2);
-
-
-
-
-M1_stop();
-M2_stop();
-delay(100000);
-
+  ENDOR_DASH(enc1, enc2);
  
 
 }

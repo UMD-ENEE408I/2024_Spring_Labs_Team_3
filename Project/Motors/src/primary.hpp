@@ -269,9 +269,9 @@ void MOVE_FORWARD(int distance, int base_pid, Encoder & enc1, Encoder & enc2){
 
   float Kp_s = 10;
 
-  float Kd_s = 0;
+  float Kd_s = 5;
 
-  float Ki_s = 0;
+  float Ki_s = 0.005;
 
   M1_forward(90);
   M2_forward(90);
@@ -623,7 +623,7 @@ while(CHECK_MODE_CHANGE()){
   
   */
 
-  MODE_1(100, 5,200,0);
+  MODE_1(90, 5,200,0);
 
 
 }
@@ -700,32 +700,32 @@ for(tick; tick < tick_goal; tick++){
   void SKIP_MAZE(Encoder & enc1, Encoder & enc2){
 
 
-  // do{
+
+  //MODE_2(5,80,6,100,0);
 
 
-  //   PID_RUN(90,5,120,0);
-  // } while(getPosition(6) > 6);
-
-
-  MODE_2(6,90,6,100,0);
-
-
-
-  
-
-  delay(200);
+  delay(300);
   NINETY_DEGREE_TURN(-90);
 
-  delay(200);
+  delay(300);
   
   //MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
 
 
+  MOVE_FORWARD(4500,255,enc1,enc2);
 
+  delay(300);
 
-  MOVE_FORWARD(4100,255,enc1,enc2);
+  // M1_stop();
+  // M2_stop();
+
+  NINETY_DEGREE_TURN(90);
+
+  TILL_LINE_MOVE_FORWARD(90,enc1,enc2);
 
   delay(200);
+
+  NINETY_DEGREE_TURN(-90);
 
 
 
@@ -759,7 +759,7 @@ for(tick; tick < tick_goal; tick++){
     readADCandConvert();
 
     //base_pid, Kp, Kd, Ki
-    MODE_1(80, 8,120,0);
+    MODE_1(70, 8,120,0);
 
   }
 
@@ -768,12 +768,17 @@ for(tick; tick < tick_goal; tick++){
 
 
 
-  MOVE_FORWARD(2000,90,enc1,enc2);
+    delay(300);
+  MOVE_FORWARD(2200,90,enc1,enc2);
 
 
   //MODE_2(10,75,6,60,0);
   
+  delay(300);
+
   NINETY_DEGREE_TURN(90);
+
+  delay(300);
 
 
 
@@ -787,7 +792,7 @@ for(tick; tick < tick_goal; tick++){
 /*
 GUN FORWARD
 */
- MOVE_FORWARD(4800,255,enc1,enc2);
+ MOVE_FORWARD(4600,255,enc1,enc2);
 
   
   delay(200);
@@ -806,88 +811,12 @@ GUN FORWARD
 
   }
 
-// void MOVE_LINEAR(int base_pid, int Kp, int Kd, int Ki, Encoder & enc1, Encoder & enc2){
-
-// readADCandConvert();
-
-
-
-// do{
-
-
-//     int t_start = micros();
-//     int t_end = micros();
-
-// /*     long enc1_value = enc1.read();
-//     long enc2_value = -1*enc2.read();
-
-//     enc1.write(0);
-//     enc2.write(0);
-//  */
-//     //enc1.readAndReset();
-
-//     //enc2.readAndReset();
-//     float pos = getPosition(previousPosition);
-//     previousPosition = pos;
-
-//     error = pos - mid;
-//     total_error += error;
-
-//     int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
-//     int right_motor = base_pid + pid_value;
-//     int left_motor = base_pid - pid_value;
-
-//     M1_forward(left_motor);
-//     M2_forward(right_motor);
-
-//     /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
-//     Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
-//     Serial.println(); */
-
-//     last_error = error;
-
-
-
-// readADCandConvert();
-
-// /*
-// LEFT TURN
-// */
-// if (!lineArray[0] & !lineArray[1] & !lineArray[2] & !lineArray[10] & !lineArray[11] & !lineArray[12]){
-
-//     NINETY_DEGREE_TURN(90);
-//     delay(200);
-//     continue;
-
-// }
-
-// /*
-// RIGHT TURN
-// */
-// else if (!lineArray[0] & !lineArray[1] & !lineArray[2] & lineArray[10] & lineArray[11] & lineArray[12]){
-
-//      NINETY_DEGREE_TURN(-90);
-
-//      delay(200);
-
-
-//      delay(100000);
-//     continue;
-
-//    }
-
-
-
-// } while(!CHECK_MODE_CHANGE());
-
-
-// }
 
 
 void DUAL_FATES(Encoder & enc1, Encoder & enc2){
 
   
-  MODE_1(80,8,120,0);
+  MODE_1(70,8,130,0);
 
 
   /*
@@ -925,7 +854,8 @@ bool path = 1;
  PATH < 0: RIGHT
  DEFAULT: SKIP (GO STRAIGHT)
  */
- switch (path){
+
+switch (path){
 
 
 
@@ -938,8 +868,58 @@ bool path = 1;
 
   delay(100);
 
-  
-  MODE_1(80,8,120,0);
+
+  do{
+
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = 8*error + 120*(error-last_error) + 0*total_error;
+    int right_motor = 70 + pid_value;
+    int left_motor = 70 - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+
+  readADCandConvert();
+  }while(!(lineArray[12] && lineArray[11] && lineArray[10] && lineArray[9]));
+
+  M1_forward(90);
+  M2_forward(90);
+  delay(200);
+
+  NINETY_DEGREE_TURN(90);
+
+  MODE_1(90,6,90,0);
+
 
 
   break;
@@ -951,14 +931,67 @@ bool path = 1;
   */
   case(1):
 
+  MOVE_FORWARD(4,90,enc1,enc2);
+
   delay(100);
-  
-  
-  MODE_1(80,8,120,0);
+
+
+  do{
+
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = 8*error + 120*(error-last_error) + 0*total_error;
+    int right_motor = 70 + pid_value;
+    int left_motor = 70 - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+
+  readADCandConvert();
+  }while(!(lineArray[0] && lineArray[1] && lineArray[2] && lineArray[3]));
+
+  M1_forward(90);
+  M2_forward(90);
+  delay(200);
+
+  NINETY_DEGREE_TURN(-90);
+
+  MODE_1(90,6,90,0);
 
 
 
   break;
+
+  
 
   /*
   SKIP IT
@@ -978,6 +1011,36 @@ bool path = 1;
   break;
 
  }
+
+
+}
+
+
+void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
+
+  /*
+  GUN FORWARD
+  */
+  //TILL_LINE_MOVE_FORWARD(255,enc1,enc2);
+
+  MOVE_FORWARD(5300,255,enc1,enc2);
+
+
+    M1_forward(90);
+    M2_forward(90);
+    delay(200);
+    M1_stop();
+    M2_stop();
+    delay(200);
+
+  M1_backward(100);
+  M2_forward(100);
+
+    delay(100000);
+
+
+
+
 
 
 }
