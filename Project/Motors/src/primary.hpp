@@ -12,6 +12,13 @@
 
 
 /*
+ONLY RUN AT 8.27 VOLTS OR HIGHER
+
+
+*/
+
+
+/*
 CREATE OBJECTS
 */
 Adafruit_MCP3008 adc1;
@@ -226,7 +233,7 @@ void NINETY_DEGREE_TURN(float degrees) {
   M1_stop();
   M2_stop();
 
-  delay(100);
+  delay(200);
 }
 /*
 CHECK_MODE_CHANGE checks all of the sensors are white- which signifies the NEXT mode, creep forward and check
@@ -540,16 +547,6 @@ float getPosition(float previousPosition) {
 
 
 
-// WIFI STUFF
-
-// Change this stuff later
-
-// const char* ssid = "Elink"; // Name of Network
-// const char* password = "David!Kristina"; // Network Password
-
-
-
-
 void MODE_1(int base_pid, int Kp, int Kd, int Ki){
 
 
@@ -623,7 +620,7 @@ while(CHECK_MODE_CHANGE()){
   
   */
 
-  MODE_1(90, 5,200,0);
+  MODE_1(90, 5,250,0);
 
 
 }
@@ -712,7 +709,7 @@ for(tick; tick < tick_goal; tick++){
   //MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
 
 
-  MOVE_FORWARD(4500,255,enc1,enc2);
+  MOVE_FORWARD(4800,255,enc1,enc2);
 
   delay(300);
 
@@ -767,18 +764,22 @@ for(tick; tick < tick_goal; tick++){
   void ASTEROIDS( Encoder & enc1, Encoder & enc2){
 
 
-
-    delay(300);
-  MOVE_FORWARD(2200,90,enc1,enc2);
+    M1_stop();
+    M2_stop();
+    delay(500);
+  MOVE_FORWARD(2400,90,enc1,enc2);
 
 
   //MODE_2(10,75,6,60,0);
+
+  M1_stop();
+  M2_stop();
   
-  delay(300);
+  delay(500);
 
-  NINETY_DEGREE_TURN(90);
+  NINETY_DEGREE_TURN(85);
 
-  delay(300);
+  delay(200);
 
 
 
@@ -792,7 +793,7 @@ for(tick; tick < tick_goal; tick++){
 /*
 GUN FORWARD
 */
- MOVE_FORWARD(4600,255,enc1,enc2);
+ MOVE_FORWARD(5200,150,enc1,enc2);
 
   
   delay(200);
@@ -806,17 +807,21 @@ GUN FORWARD
   NINETY_DEGREE_TURN(-90);
 
 
-  MODE_1(100,6,60,0);
+  MODE_1(85,6,60,0);
 
 
   }
 
 
 
-void DUAL_FATES(Encoder & enc1, Encoder & enc2){
+void DUAL_FATES(const char* ssid, 
+const char* password, WiFiServer server, Encoder & enc1, Encoder & enc2){
 
   
   MODE_1(70,8,130,0);
+
+
+  int Amp_left, Amp_right;
 
 
   /*
@@ -825,29 +830,88 @@ void DUAL_FATES(Encoder & enc1, Encoder & enc2){
 
  NINETY_DEGREE_TURN(90);
  
- delay(200);
+delay(100);
+
+
+
+/*
+GET AMPLITUDE FROM LEFT SIDE
+*/
+
+
+WiFiClient client = server.available(); // Check for a client connection
+
+    if (client) {
+        Serial.println("Connected to client");
+        while (client.connected()) { // Loop while the client is connected
+            if (client.available()) { // If data is available from the client
+
+
+
+                /*
+                GET AMPLITUDE LEFT
+                */
+
+                int Amp_left = client.parseInt(); // Read the incoming integer
+                Serial.println("Received data: " + String(Amp_left));
+
+              
+            }
+        } 
+        client.stop(); // Close the connection
+        Serial.println("Client Disconnected.");
+    }
+
+ delay(10000);
  
- /*
- GET AMPLITUDE LEFT
- */
- float Amp_left = 0;
+ //float Amp_left = 0;
 
  
  NINETY_DEGREE_TURN(-180);
 
  
- delay(200);
+ delay(100);
+
+ /*
+GET AMPLITUDE FROM LEFT SIDE
+*/
+
+/* 
+WiFiClient client = server.available(); // Check for a client connection
+ */
+    if (client) {
+        Serial.println("Connected to client");
+        while (client.connected()) { // Loop while the client is connected
+            if (client.available()) { // If data is available from the client
+
+
+
+                /*
+                GET AMPLITUDE RIGHT
+                */
+
+                int Amp_right = client.parseInt(); // Read the incoming integer
+                Serial.println("Received data: " + String(Amp_right));
+
+              
+            }
+        } 
+        client.stop(); // Close the connection
+        Serial.println("Client Disconnected.");
+    }
+
+ delay(10000);
 
  
  /*
  GET AMPLITUDE RIGHT
  */
- float Amp_right = 0;
+ //float Amp_right = 0;
 
-//bool path = (Amp_right - Amp_left) > 0;
+bool path = (Amp_right - Amp_left) > 0;
 
 
-bool path = 1;
+//bool path = 1;
 
  /*
  PATH > 0: LEFT
@@ -1023,7 +1087,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
   */
   //TILL_LINE_MOVE_FORWARD(255,enc1,enc2);
 
-  MOVE_FORWARD(5300,255,enc1,enc2);
+  MOVE_FORWARD(5600,150,enc1,enc2);
 
 
     M1_forward(90);
@@ -1047,9 +1111,262 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 
 
 
-void MAZE_CURVE_LEFT(Encoder & enc1, Encoder & enc2){
+// void MAZE_UTURN_LEFT(Encoder & enc1, Encoder & enc2){
+
+//   NINETY_DEGREE_TURN(90);
+
+//   delay(100);
+//   MOVE_FORWARD(5,85,enc1,enc2);
 
 
+//   delay(100);
+//   NINETY_DEGREE_TURN(-90);
+
+  
+//   delay(100);
+
+//   MOVE_FORWARD(12,85,enc1,enc2);
+
+//   delay(100);
+
+
+//   NINETY_DEGREE_TURN(-90);
+
+//   delay(100);
+
+//   TILL_LINE_MOVE_FORWARD(85,enc1,enc2);
+
+  
+//   MOVE_FORWARD(100,85,enc1,enc2);
+
+//   delay(100);
+
+//   NINETY_DEGREE_TURN(90);
+
+//   MODE_2(4,85,4,80,0);
+
+// }
+
+// void MAZE_UTURN_RIGHT(Encoder & enc1, Encoder & enc2){
+
+
+//   NINETY_DEGREE_TURN(-90);
+
+//   delay(100);
+//   MOVE_FORWARD(5,85,enc1,enc2);
+
+
+//   delay(100);
+//   NINETY_DEGREE_TURN(90);
+
+  
+//   delay(100);
+
+//   MOVE_FORWARD(12,85,enc1,enc2);
+
+//   delay(100);
+
+
+//   NINETY_DEGREE_TURN(90);
+
+//   delay(100);
+
+//   TILL_LINE_MOVE_FORWARD(85,enc1,enc2);
+
+//   MOVE_FORWARD(100,85,enc1,enc2);
+
+//   delay(100);
+
+//   NINETY_DEGREE_TURN(-90);
+
+//   MODE_2(4,85,4,80,0);
+
+
+// }
+
+void MAZE_AVOID_LEFT(Encoder & enc1, Encoder & enc2){
+
+  M1_stop();
+  M2_stop();
+
+  delay(200);
+
+NINETY_DEGREE_TURN(90);
+
+delay(100);
+
+MOVE_FORWARD(350,88,enc1,enc2);
+
+
+delay(500);
+
+NINETY_DEGREE_TURN(-90);
+
+delay(500);
+
+MOVE_FORWARD(650,88,enc1,enc2);
+
+delay(500);
+
+NINETY_DEGREE_TURN(-90);
+
+delay(500);
+
+TILL_LINE_MOVE_FORWARD(88,enc1,enc2);
+
+MOVE_FORWARD(100,88,enc1,enc2);
+
+delay(500);
+
+NINETY_DEGREE_TURN(90);
+
+//MODE_2(4,85,4,80,0);
+
+
+
+}
+
+void MAZE_AVOID_RIGHT(Encoder & enc1, Encoder & enc2){
+
+
+NINETY_DEGREE_TURN(-90);
+
+delay(100);
+
+MOVE_FORWARD(500,85,enc1,enc2);
+
+
+delay(200);
+
+NINETY_DEGREE_TURN(90);
+
+delay(200);
+
+MOVE_FORWARD(650,85,enc1,enc2);
+
+delay(200);
+
+NINETY_DEGREE_TURN(90);
+
+delay(200);
+
+
+TILL_LINE_MOVE_FORWARD(85,enc1,enc2);
+
+MOVE_FORWARD(100,85,enc1,enc2);
+
+delay(200);
+
+NINETY_DEGREE_TURN(-90);
+
+//MODE_2(4,85,4,80,0);
+
+  
+}
+
+
+void MAZE_FORWARD(Encoder & enc1, Encoder & enc2){
+
+  MODE_2(13,85,2,400,0);
+
+  M1_stop();
+  M2_stop();
+
+  delay(100);
+
+}
+
+void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder & enc1, Encoder & enc2){
+
+  START_BLOCK();
+
+  MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
+
+  MOVE_FORWARD(2,90,enc1,enc2);
+
+  SKIP_MAZE(enc1, enc2);
+
+  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
+
+  KESSEL();
+
+  ASTEROIDS( enc1 , enc2);
+
+  MODE_CHANGE_BLOCK_RIGHT(enc1,enc2);
+
+
+  DUAL_FATES(ssid, password, server,enc1,enc2);
+
+  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
+
+  MODE_1(90,6,120,0);
+
+  
+  MOVE_FORWARD(600,90,enc1, enc2);
+
+
+  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
+
+  ENDOR_DASH(enc1, enc2);
+
+}
+
+
+
+void DO_MAZE(Encoder & enc1, Encoder & enc2){
+
+
+
+/*
+FROM PYTHON:
+
+
+
+
+*/
+
+  START_BLOCK();
+
+  
+  MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
+
+
+  MODE_2(14,90,4,300,0);
+
+
+    M1_stop();
+  M2_stop();
+  delay(1000);
+
+
+  MAZE_FORWARD(enc1,enc2);
+
+  delay(1000);
+
+  MAZE_FORWARD(enc1,enc2);
+  
+
+  delay(1000);
+
+  MAZE_FORWARD(enc1,enc2);
+
+  delay(1000);
+
+  MAZE_FORWARD(enc1,enc2);
+
+  delay(100000);
+
+
+  MAZE_AVOID_LEFT(enc1, enc2);
+
+  MAZE_AVOID_RIGHT(enc1,enc2);
+
+
+  delay(1000);
+  MAZE_AVOID_RIGHT(enc1,enc2);
+
+  delay(1000);
+  MAZE_FORWARD(enc1, enc2);
 
 
 

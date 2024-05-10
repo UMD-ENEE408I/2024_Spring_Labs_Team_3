@@ -51,48 +51,6 @@ void setup() {
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
-  delay(2000);
-
-
-
-    // WIFI STUFF
-
-    // delay(1000);
-    // // Connecting to Mutual WiFi Network
-    // WiFi.mode(WIFI_STA); //Optional
-    // WiFi.begin(ssid, password);
-    // Serial.println("\nConnecting");
-
-    // while(WiFi.status() != WL_CONNECTED){
-    //     Serial.print(".");
-    //     delay(100);
-    // }
-    // Serial.println("\nConnected to the WiFi network");
-    // Serial.print("Local ESP32 IP: ");
-    // Serial.println(WiFi.localIP());
-    // // SERVER SOCKET SECTION *************************
-    // // Used when Nvidia Sends Messages -> Heltec
-    // int serverSocket = socket(AF_INET, SOCK_STREAM, 0); 
-    // sockaddr_in serverAddress; 
-    // serverAddress.sin_family = AF_INET; 
-    // serverAddress.sin_port = htons(8000); 
-    // String ipString = WiFi.localIP().toString();
-    // serverAddress.sin_addr.s_addr = inet_addr(ipString.c_str()); 
-    // // binding socket. 
-    // bind(serverSocket, (struct sockaddr*)&serverAddress, 
-    //      sizeof(serverAddress)); 
-    // listen(serverSocket, 5); 
-    // // accepting connection request 
-    // int clientSocket = accept(serverSocket, nullptr, nullptr); 
-  
-    // // recieving data 
-    // char buffer[1024] = { 0 }; 
-    // recv(clientSocket, buffer, sizeof(buffer), 0); 
-    // Serial.println(buffer);
-
-    // // closing the socket. 
-    // close(serverSocket);
-
 }
 
 /*
@@ -111,42 +69,30 @@ void setup() {
 
 void loop() {
 
+  
+
   // Create the encoder objects after the motor has
   // stopped, else some sort exception is triggered
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
 
-
-  START_BLOCK();
-
-  MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
-
-  MOVE_FORWARD(2,90,enc1,enc2);
-
-  SKIP_MAZE(enc1, enc2);
-
-  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
-
-  KESSEL();
-
-  ASTEROIDS( enc1 , enc2);
-
-  MODE_CHANGE_BLOCK_RIGHT(enc1,enc2);
-
-
-  DUAL_FATES(enc1,enc2);
-
-  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
-
-  MODE_1(90,6,120,0);
+  
+  const char* ssid = "HeltecAP"; // SSID for the access point
+  const char* password = "12345678"; // Password for the access point
+  WiFiServer server(80);
 
   
-  MOVE_FORWARD(600,90,enc1, enc2);
+  delay(2000);
+
+  PRIMARY(ssid,password,server,enc1, enc2);
+
+  //DO_MAZE(enc1,enc2);
 
 
-  MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
+  M1_stop();
+  M2_stop();
 
-  ENDOR_DASH(enc1, enc2);
- 
+  delay(100000);
+  
 
 }
