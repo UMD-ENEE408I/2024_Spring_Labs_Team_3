@@ -702,21 +702,21 @@ for(tick; tick < tick_goal; tick++){
 
 
   delay(300);
-  NINETY_DEGREE_TURN(-90);
+  NINETY_DEGREE_TURN(-105);
 
   delay(300);
   
   //MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
 
 
-  MOVE_FORWARD(4800,255,enc1,enc2);
+  MOVE_FORWARD(4700,120,enc1,enc2);
 
-  delay(300);
+  delay(500);
 
   // M1_stop();
   // M2_stop();
 
-  NINETY_DEGREE_TURN(90);
+  NINETY_DEGREE_TURN(75);
 
   TILL_LINE_MOVE_FORWARD(90,enc1,enc2);
 
@@ -767,7 +767,7 @@ for(tick; tick < tick_goal; tick++){
     M1_stop();
     M2_stop();
     delay(500);
-  MOVE_FORWARD(2400,90,enc1,enc2);
+  MOVE_FORWARD(2500,90,enc1,enc2);
 
 
   //MODE_2(10,75,6,60,0);
@@ -777,9 +777,9 @@ for(tick; tick < tick_goal; tick++){
   
   delay(500);
 
-  NINETY_DEGREE_TURN(85);
+  NINETY_DEGREE_TURN(75);
 
-  delay(200);
+  delay(500);
 
 
 
@@ -793,15 +793,15 @@ for(tick; tick < tick_goal; tick++){
 /*
 GUN FORWARD
 */
- MOVE_FORWARD(5200,150,enc1,enc2);
+ MOVE_FORWARD(5000,120,enc1,enc2);
 
   
-  delay(200);
+  delay(500);
 
-  NINETY_DEGREE_TURN(90);
+  NINETY_DEGREE_TURN(70);
 
   
-  TILL_LINE_MOVE_FORWARD(90,enc1, enc2);
+  TILL_LINE_MOVE_FORWARD(80,enc1, enc2);
 
   
   NINETY_DEGREE_TURN(-90);
@@ -862,7 +862,7 @@ WiFiClient client = server.available(); // Check for a client connection
         Serial.println("Client Disconnected.");
     }
 
- delay(10000);
+ delay(5000);
  
  //float Amp_left = 0;
 
@@ -900,7 +900,7 @@ WiFiClient client = server.available(); // Check for a client connection
         Serial.println("Client Disconnected.");
     }
 
- delay(10000);
+ delay(5000);
 
  
  /*
@@ -1087,7 +1087,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
   */
   //TILL_LINE_MOVE_FORWARD(255,enc1,enc2);
 
-  MOVE_FORWARD(5600,150,enc1,enc2);
+  MOVE_FORWARD(5300,150,enc1,enc2);
 
 
     M1_forward(90);
@@ -1306,6 +1306,8 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
 
 
   MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
+
+  NINETY_DEGREE_TURN(-10);
 
   ENDOR_DASH(enc1, enc2);
 
