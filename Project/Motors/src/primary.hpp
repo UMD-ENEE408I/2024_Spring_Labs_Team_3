@@ -203,7 +203,7 @@ void digitalConvert(){
   
 }
 
-void NINETY_DEGREE_TURN(float degrees) {
+void DEGREE_TURN(float degrees) {
 
   M1_stop();
   M2_stop();
@@ -278,7 +278,7 @@ void MOVE_FORWARD(int distance, int base_pid, Encoder & enc1, Encoder & enc2){
 
   float Kd_s = 5;
 
-  float Ki_s = 0.005;
+  float Ki_s = 0.01;
 
   M1_forward(90);
   M2_forward(90);
@@ -477,7 +477,7 @@ void MODE_CHANGE_BLOCK_LEFT(Encoder & enc1, Encoder & enc2){
     
 
 
-    NINETY_DEGREE_TURN(90);
+    DEGREE_TURN(90);
 
     M1_stop();
     M2_stop();
@@ -511,7 +511,7 @@ void MODE_CHANGE_BLOCK_RIGHT(Encoder & enc1, Encoder & enc2){
     
 
 
-    NINETY_DEGREE_TURN(-90);
+    DEGREE_TURN(-90);
 
     M1_stop();
     M2_stop();
@@ -702,7 +702,7 @@ for(tick; tick < tick_goal; tick++){
 
 
   delay(300);
-  NINETY_DEGREE_TURN(-105);
+  DEGREE_TURN(-105);
 
   delay(300);
   
@@ -716,13 +716,13 @@ for(tick; tick < tick_goal; tick++){
   // M1_stop();
   // M2_stop();
 
-  NINETY_DEGREE_TURN(75);
+  DEGREE_TURN(75);
 
   TILL_LINE_MOVE_FORWARD(90,enc1,enc2);
 
   delay(200);
 
-  NINETY_DEGREE_TURN(-90);
+  DEGREE_TURN(-90);
 
 
 
@@ -777,7 +777,7 @@ for(tick; tick < tick_goal; tick++){
   
   delay(500);
 
-  NINETY_DEGREE_TURN(75);
+  DEGREE_TURN(75);
 
   delay(500);
 
@@ -786,7 +786,7 @@ for(tick; tick < tick_goal; tick++){
   //MOVE_FORWARD(1200,100,enc1,enc2);
 
 
- // NINETY_DEGREE_TURN(90);
+ // DEGREE_TURN(90);
 
 
 
@@ -798,13 +798,13 @@ GUN FORWARD
   
   delay(500);
 
-  NINETY_DEGREE_TURN(70);
+  DEGREE_TURN(70);
 
   
   TILL_LINE_MOVE_FORWARD(80,enc1, enc2);
 
   
-  NINETY_DEGREE_TURN(-90);
+  DEGREE_TURN(-90);
 
 
   MODE_1(85,6,60,0);
@@ -828,7 +828,7 @@ const char* password, WiFiServer server, Encoder & enc1, Encoder & enc2){
   GET AMPLITUDE LEFT AND RIGHT
   */
 
- NINETY_DEGREE_TURN(90);
+ DEGREE_TURN(90);
  
 delay(100);
 
@@ -867,7 +867,7 @@ WiFiClient client = server.available(); // Check for a client connection
  //float Amp_left = 0;
 
  
- NINETY_DEGREE_TURN(-180);
+ DEGREE_TURN(-180);
 
  
  delay(100);
@@ -928,7 +928,7 @@ switch (path){
   */
   case(0):
 
-  NINETY_DEGREE_TURN(180);
+  DEGREE_TURN(180);
 
   delay(100);
 
@@ -980,7 +980,7 @@ switch (path){
   M2_forward(90);
   delay(200);
 
-  NINETY_DEGREE_TURN(90);
+  DEGREE_TURN(90);
 
   MODE_1(90,6,90,0);
 
@@ -1047,7 +1047,7 @@ switch (path){
   M2_forward(90);
   delay(200);
 
-  NINETY_DEGREE_TURN(-90);
+  DEGREE_TURN(-90);
 
   MODE_1(90,6,90,0);
 
@@ -1113,14 +1113,14 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 
 // void MAZE_UTURN_LEFT(Encoder & enc1, Encoder & enc2){
 
-//   NINETY_DEGREE_TURN(90);
+//   DEGREE_TURN(90);
 
 //   delay(100);
 //   MOVE_FORWARD(5,85,enc1,enc2);
 
 
 //   delay(100);
-//   NINETY_DEGREE_TURN(-90);
+//   DEGREE_TURN(-90);
 
   
 //   delay(100);
@@ -1130,7 +1130,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 //   delay(100);
 
 
-//   NINETY_DEGREE_TURN(-90);
+//   DEGREE_TURN(-90);
 
 //   delay(100);
 
@@ -1141,7 +1141,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 
 //   delay(100);
 
-//   NINETY_DEGREE_TURN(90);
+//   DEGREE_TURN(90);
 
 //   MODE_2(4,85,4,80,0);
 
@@ -1150,14 +1150,14 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 // void MAZE_UTURN_RIGHT(Encoder & enc1, Encoder & enc2){
 
 
-//   NINETY_DEGREE_TURN(-90);
+//   DEGREE_TURN(-90);
 
 //   delay(100);
 //   MOVE_FORWARD(5,85,enc1,enc2);
 
 
 //   delay(100);
-//   NINETY_DEGREE_TURN(90);
+//   DEGREE_TURN(90);
 
   
 //   delay(100);
@@ -1167,7 +1167,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 //   delay(100);
 
 
-//   NINETY_DEGREE_TURN(90);
+//   DEGREE_TURN(90);
 
 //   delay(100);
 
@@ -1177,7 +1177,7 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
 
 //   delay(100);
 
-//   NINETY_DEGREE_TURN(-90);
+//   DEGREE_TURN(-90);
 
 //   MODE_2(4,85,4,80,0);
 
@@ -1191,7 +1191,7 @@ void MAZE_AVOID_LEFT(Encoder & enc1, Encoder & enc2){
 
   delay(200);
 
-NINETY_DEGREE_TURN(90);
+DEGREE_TURN(90);
 
 delay(100);
 
@@ -1200,7 +1200,7 @@ MOVE_FORWARD(350,88,enc1,enc2);
 
 delay(500);
 
-NINETY_DEGREE_TURN(-90);
+DEGREE_TURN(-90);
 
 delay(500);
 
@@ -1208,7 +1208,7 @@ MOVE_FORWARD(650,88,enc1,enc2);
 
 delay(500);
 
-NINETY_DEGREE_TURN(-90);
+DEGREE_TURN(-90);
 
 delay(500);
 
@@ -1218,7 +1218,7 @@ MOVE_FORWARD(100,88,enc1,enc2);
 
 delay(500);
 
-NINETY_DEGREE_TURN(90);
+DEGREE_TURN(90);
 
 //MODE_2(4,85,4,80,0);
 
@@ -1229,7 +1229,7 @@ NINETY_DEGREE_TURN(90);
 void MAZE_AVOID_RIGHT(Encoder & enc1, Encoder & enc2){
 
 
-NINETY_DEGREE_TURN(-90);
+DEGREE_TURN(-90);
 
 delay(100);
 
@@ -1238,7 +1238,7 @@ MOVE_FORWARD(500,85,enc1,enc2);
 
 delay(200);
 
-NINETY_DEGREE_TURN(90);
+DEGREE_TURN(90);
 
 delay(200);
 
@@ -1246,7 +1246,7 @@ MOVE_FORWARD(650,85,enc1,enc2);
 
 delay(200);
 
-NINETY_DEGREE_TURN(90);
+DEGREE_TURN(90);
 
 delay(200);
 
@@ -1257,7 +1257,7 @@ MOVE_FORWARD(100,85,enc1,enc2);
 
 delay(200);
 
-NINETY_DEGREE_TURN(-90);
+DEGREE_TURN(-90);
 
 //MODE_2(4,85,4,80,0);
 
@@ -1307,7 +1307,7 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
 
   MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
 
-  NINETY_DEGREE_TURN(-10);
+  DEGREE_TURN(-10);
 
   ENDOR_DASH(enc1, enc2);
 
@@ -1315,17 +1315,14 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
 
 
 
-void DO_MAZE(Encoder & enc1, Encoder & enc2){
-
-
-
-/*
-FROM PYTHON:
+void DO_MAZE(Encoder & enc1, Encoder & enc2, WiFiServer server){
 
 
 
 
-*/
+
+Serial.print(server);
+
 
   START_BLOCK();
 
@@ -1335,41 +1332,98 @@ FROM PYTHON:
 
   MODE_2(14,90,4,300,0);
 
-
-    M1_stop();
-  M2_stop();
-  delay(1000);
-
-
   MAZE_FORWARD(enc1,enc2);
 
-  delay(1000);
 
-  MAZE_FORWARD(enc1,enc2);
+  delay(5000);
+
+  WiFiClient client = server.available(); // Check for a client connection
+
+  do{
+
+    Serial.print("Searching for client....\n");
+    //Serial.print(client);
+    client = server.available(); // Check for a client connection
+    
+    delay(1000);
   
+  }while(!client);
 
-  delay(1000);
-
-  MAZE_FORWARD(enc1,enc2);
-
-  delay(1000);
-
-  MAZE_FORWARD(enc1,enc2);
-
-  delay(100000);
-
-
-  MAZE_AVOID_LEFT(enc1, enc2);
-
-  MAZE_AVOID_RIGHT(enc1,enc2);
+    if (client) {
+        Serial.println("New Client.");
+        while (client.connected()) { 
+            //m++;
+            //Serial.println(m);
+            // Loop while the client is connected
+            
+            //client.write(k);
 
 
-  delay(1000);
-  MAZE_AVOID_RIGHT(enc1,enc2);
 
-  delay(1000);
-  MAZE_FORWARD(enc1, enc2);
+            /*
+            SEND READY SIGNAL
+            */
+            client.write(1);
 
 
+            if (client.available()) { // If data is available from the client
+                //client.write(ready);
+
+
+                delay(1000);
+                int data = client.parseInt(); // Read the incoming integer
+                Serial.println("Received data: " + String(data));
+                
+                if (data==0){
+                  Serial.println(data);
+                  MAZE_FORWARD(enc1,enc2);
+                  delay(1000);
+                }
+                else if(data==1){
+                  Serial.println(data);
+                  MAZE_AVOID_LEFT(enc1,enc2);
+                  delay(1000);
+                }
+                else if(data==2){
+                  Serial.println(data);
+                  MAZE_AVOID_RIGHT(enc1,enc2); //need corner function
+                  delay(1000);
+                }
+                else if (data==3){
+                  Serial.println(data);
+                  MAZE_AVOID_RIGHT(enc1,enc2); //need corner function
+                  delay(1000);
+                }
+                else if (data==4){
+                  Serial.println(data);
+                  MAZE_AVOID_RIGHT(enc1,enc2); //need function
+                  delay(1000);
+                }
+                else if(data==5){
+                  Serial.println(data);
+                  MAZE_AVOID_LEFT(enc1,enc2); //need function
+                  delay(1000);
+                }
+                else if(data==6){
+                  Serial.println(data);
+                  MAZE_AVOID_LEFT(enc1,enc2); //need function
+                  delay(1000);
+                }
+
+                //ready = 1;
+            }
+
+            //client.write(k);
+            //Serial.println(k);
+        }
+        client.stop(); // Close the connection
+        Serial.println("Client Disconnected.");
+    }
+
+  Serial.print("WiFi finished");
+
+  M1_stop();
+  M2_stop();
+  delay(10000000);
 
 }

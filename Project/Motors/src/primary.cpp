@@ -10,6 +10,11 @@
 
 #include "primary.hpp"
 
+  
+const char* ssid = "HeltecAP"; // SSID for the access point
+const char* password = "12345678"; // Password for the access point
+WiFiServer server(80);
+
 
 
 
@@ -51,6 +56,21 @@ void setup() {
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+
+
+  /*
+  WIFI setup stuff
+  */
+
+   // Set up the Heltec v2 as an access point
+  WiFi.softAP(ssid, password);
+
+  Serial.println("Access Point Started");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.begin();
+
 }
 
 /*
@@ -76,17 +96,14 @@ void loop() {
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
 
-  
-  const char* ssid = "HeltecAP"; // SSID for the access point
-  const char* password = "12345678"; // Password for the access point
-  WiFiServer server(80);
+
 
   
   delay(2000);
 
   PRIMARY(ssid,password,server,enc1, enc2);
 
-  //DO_MAZE(enc1,enc2);
+  //DO_MAZE(enc1,enc2,server);
 
 
   M1_stop();
