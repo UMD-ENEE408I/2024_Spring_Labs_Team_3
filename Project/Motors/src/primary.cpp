@@ -73,8 +73,8 @@ void setup() {
 
 }
 
-/*
-  Mode 0: Line of the republic (Forward movement)
+
+/*   Mode 0: Line of the republic (Forward movement)
 
   Mode 1: Maze of mandalore (Searching algorithm w/ GPU)
 

@@ -193,15 +193,7 @@ for (int i = 0; i < 7; i++) {
 }
 
 
-/*
-digitalConvert() reads the values of the sensors from adc1_buf and adc2_buf
-and stores them as a 1 or 0 into lineArray[0 -> 13]
 
-*/
-
-void digitalConvert(){
-  
-}
 
 void DEGREE_TURN(float degrees) {
 
@@ -235,6 +227,8 @@ void DEGREE_TURN(float degrees) {
 
   delay(200);
 }
+
+
 /*
 CHECK_MODE_CHANGE checks all of the sensors are white- which signifies the NEXT mode, creep forward and check
 */
@@ -258,6 +252,7 @@ int CHECK_MODE_CHANGE(){
 }
 
 
+
 void MOVE_FORWARD(int distance, int base_pid, Encoder & enc1, Encoder & enc2){
 
   enc1.readAndReset();
@@ -276,7 +271,7 @@ void MOVE_FORWARD(int distance, int base_pid, Encoder & enc1, Encoder & enc2){
 
   float Kp_s = 10;
 
-  float Kd_s = 5;
+  float Kd_s = 50;
 
   float Ki_s = 0.01;
 
@@ -485,7 +480,7 @@ void MODE_CHANGE_BLOCK_LEFT(Encoder & enc1, Encoder & enc2){
     delay(100);
 
 
-   MOVE_FORWARD(500,80,enc1, enc2);
+   MOVE_FORWARD(500,90,enc1, enc2);
 
 }
 
@@ -497,29 +492,27 @@ void MODE_CHANGE_BLOCK_RIGHT(Encoder & enc1, Encoder & enc2){
     /*
     TUNED TO SALEH'S ROBOT
     */
+  
   M1_stop();
    M2_stop();
 
-   delay(100);
+   delay(500);
 
-   MOVE_FORWARD(500,80,enc1, enc2);
+   MOVE_FORWARD(500,90,enc1, enc2);
 
     M1_stop();
     M2_stop();
 
-    delay(100);
+    delay(200);
     
 
 
     DEGREE_TURN(-90);
 
-    M1_stop();
-    M2_stop();
-
-    delay(100);
+    delay(300);
 
 
-   MOVE_FORWARD(500,80,enc1, enc2);
+   MOVE_FORWARD(500,90,enc1, enc2);
 
 }
 
@@ -539,6 +532,24 @@ float getPosition(float previousPosition) {
 
   // Serial.print("white: "); Serial.print(white_count); Serial.print("\t");
   // Serial.print("pos: "); Serial.print(pos); Serial.println("\t");
+  if (white_count == 0) {
+    return previousPosition;
+  }
+  return pos/white_count;
+}
+
+
+float special_getPosition(float previousPosition) {
+  
+  float pos = 0;
+  uint8_t white_count = 0;
+  for (int i = 3; i < 9; i++) {
+    if (lineArray[i] == 1) {
+      pos += i;
+      white_count+=1;
+    } 
+  }
+
   if (white_count == 0) {
     return previousPosition;
   }
@@ -595,7 +606,70 @@ void MODE_1(int base_pid, int Kp, int Kd, int Ki){
 
 
   }
+
+  M1_stop();
+  M2_stop();
 }
+
+
+void SPECIAL_MODE_1(int base_pid, int Kp, int Kd, int Ki){
+
+
+  /*
+  RUN PID CONTROLLER UNTIL MODE CHANGE BLOCK IS HIT
+  */
+
+  while(!CHECK_MODE_CHANGE()){
+
+      /* if(lineArray[9] || lineArray[10] || lineArray[11] || lineArray[12]){
+
+        continue;
+
+    } */
+
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = special_getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
+    int right_motor = base_pid + pid_value;
+    int left_motor = base_pid - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+  }
+
+  M1_stop();
+  M2_stop();
+}
+
 
 void START_BLOCK(){
 
@@ -620,7 +694,7 @@ while(CHECK_MODE_CHANGE()){
   
   */
 
-  MODE_1(90, 5,250,0);
+  MODE_1(85, 2,250,0.05);
 
 
 }
@@ -698,243 +772,10 @@ for(tick; tick < tick_goal; tick++){
 
 
 
-  //MODE_2(5,80,6,100,0);
-
-
-  delay(300);
-  DEGREE_TURN(-105);
-
-  delay(300);
-  
-  //MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
-
-
-  MOVE_FORWARD(4700,120,enc1,enc2);
-
-  delay(500);
-
-  // M1_stop();
-  // M2_stop();
-
-  DEGREE_TURN(75);
-
-  TILL_LINE_MOVE_FORWARD(90,enc1,enc2);
-
-  delay(200);
-
-  DEGREE_TURN(-90);
-
-
-
-  MODE_1(90,5,130,0);
-
-
-    /*
-    SKIP MAZE
-    */
-    //base_pid, Kp, Kd, Ki
-    //MODE_1(80, 5,250,0);
-
-  
-  }
-
-  void KESSEL(){
-
-
-
-    M1_stop();
-    M2_stop();
-    delay(100);
-
-
-
-    /*
-    KESSEL RUN 
-    */
-
-   
-    readADCandConvert();
-
-    //base_pid, Kp, Kd, Ki
-    MODE_1(70, 8,120,0);
-
-  }
-
-
-  void ASTEROIDS( Encoder & enc1, Encoder & enc2){
-
-
-    M1_stop();
-    M2_stop();
-    delay(500);
-  MOVE_FORWARD(2500,90,enc1,enc2);
-
-
-  //MODE_2(10,75,6,60,0);
-
-  M1_stop();
-  M2_stop();
-  
-  delay(500);
-
-  DEGREE_TURN(75);
-
-  delay(500);
-
-
-
-  //MOVE_FORWARD(1200,100,enc1,enc2);
-
-
- // DEGREE_TURN(90);
-
-
-
-/*
-GUN FORWARD
-*/
- MOVE_FORWARD(5000,120,enc1,enc2);
-
-  
-  delay(500);
-
-  DEGREE_TURN(70);
-
-  
-  TILL_LINE_MOVE_FORWARD(80,enc1, enc2);
-
-  
-  DEGREE_TURN(-90);
-
-
-  MODE_1(85,6,60,0);
-
-
-  }
-
-
-
-void DUAL_FATES(const char* ssid, 
-const char* password, WiFiServer server, Encoder & enc1, Encoder & enc2){
-
-  
-  MODE_1(70,8,130,0);
-
-
-  int Amp_left, Amp_right;
-
-
-  /*
-  GET AMPLITUDE LEFT AND RIGHT
-  */
-
- DEGREE_TURN(90);
- 
-delay(100);
-
-
-
-/*
-GET AMPLITUDE FROM LEFT SIDE
-*/
-
-
-WiFiClient client = server.available(); // Check for a client connection
-
-    if (client) {
-        Serial.println("Connected to client");
-        while (client.connected()) { // Loop while the client is connected
-            if (client.available()) { // If data is available from the client
-
-
-
-                /*
-                GET AMPLITUDE LEFT
-                */
-
-                int Amp_left = client.parseInt(); // Read the incoming integer
-                Serial.println("Received data: " + String(Amp_left));
-
-              
-            }
-        } 
-        client.stop(); // Close the connection
-        Serial.println("Client Disconnected.");
-    }
-
- delay(5000);
- 
- //float Amp_left = 0;
-
- 
- DEGREE_TURN(-180);
-
- 
- delay(100);
-
- /*
-GET AMPLITUDE FROM LEFT SIDE
-*/
-
-/* 
-WiFiClient client = server.available(); // Check for a client connection
- */
-    if (client) {
-        Serial.println("Connected to client");
-        while (client.connected()) { // Loop while the client is connected
-            if (client.available()) { // If data is available from the client
-
-
-
-                /*
-                GET AMPLITUDE RIGHT
-                */
-
-                int Amp_right = client.parseInt(); // Read the incoming integer
-                Serial.println("Received data: " + String(Amp_right));
-
-              
-            }
-        } 
-        client.stop(); // Close the connection
-        Serial.println("Client Disconnected.");
-    }
-
- delay(5000);
-
- 
- /*
- GET AMPLITUDE RIGHT
- */
- //float Amp_right = 0;
-
-bool path = (Amp_right - Amp_left) > 0;
-
-
-//bool path = 1;
-
- /*
- PATH > 0: LEFT
- PATH < 0: RIGHT
- DEFAULT: SKIP (GO STRAIGHT)
- */
-
-switch (path){
-
-
-
-  /*
-  CASE 0: TURN LEFT
-  */
-  case(0):
-
-  DEGREE_TURN(180);
-
-  delay(100);
+  readADCandConvert();
 
 
   do{
-
     /*
     RUN PID CONTROLLER
     */
@@ -960,6 +801,234 @@ switch (path){
     total_error += error;
 
     int pid_value = 8*error + 120*(error-last_error) + 0*total_error;
+    int right_motor = 80 + pid_value;
+    int left_motor = 80 - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+
+  readADCandConvert();
+  }while(!(lineArray[0] && lineArray[1] && lineArray[2] && lineArray[3]));
+
+
+  MOVE_FORWARD(150,90,enc1,enc2);
+
+  DEGREE_TURN(-90);
+
+ //MODE_1(95,2,2000,0.01);
+
+ SPECIAL_MODE_1(95,3,3000,0.01);
+
+}
+
+
+  void KESSEL(){
+
+
+
+    M1_stop();
+    M2_stop();
+    delay(100);
+
+
+
+    /*
+    KESSEL RUN 
+    */
+
+   
+    readADCandConvert();
+
+    //base_pid, Kp, Kd, Ki
+    MODE_1(70, 5,1700,0);
+
+  }
+
+
+  void ASTEROIDS( Encoder & enc1, Encoder & enc2){
+
+
+    M1_stop();
+    M2_stop();
+    delay(500);
+  MOVE_FORWARD(1800,85,enc1,enc2);
+
+
+  //MODE_2(10,75,6,60,0);
+
+  M1_stop();
+  M2_stop();
+  
+  delay(500);
+
+  DEGREE_TURN(90);
+
+  delay(500);
+
+
+
+  //MOVE_FORWARD(1200,100,enc1,enc2);
+
+
+ // DEGREE_TURN(90);
+
+
+
+/*
+GUN FORWARD
+*/
+ MOVE_FORWARD(5400,90,enc1,enc2);
+
+  
+  delay(500);
+
+  DEGREE_TURN(70);
+
+  
+  TILL_LINE_MOVE_FORWARD(80,enc1, enc2);
+
+  
+  DEGREE_TURN(-90);
+
+
+  MODE_1(85,6,60,0);
+
+
+  }
+
+
+
+void DUAL_FATES(const char* ssid, const char* password, WiFiServer server, Encoder & enc1, Encoder & enc2, int default_mode){
+
+  
+  MODE_1(70,8,150,0);
+
+
+  int Amp_left, Amp_right;
+
+
+  /*
+  GET AMPLITUDE LEFT AND RIGHT
+  */
+
+ M1_stop();
+ M2_stop();
+ delay(200);
+
+ DEGREE_TURN(90);
+
+
+//  int path;
+//   WiFiClient client = server.available(); // Check for a client connection
+
+//     if (client) {
+//         Serial.println("New Client.");
+//         //MODE_1(70,8,130,0);
+
+        
+//          client.write(1); //"at left record"
+//           delay(6000);
+//         while (client.connected()) { 
+           
+               
+//                 if(client.available()) { //done recording on left
+//                 int data = client.parseInt(); // Read the incoming integer
+//                 Serial.println("Received data: " + String(data));
+                
+//                 //if (data==1){
+                
+//                 //continue;
+
+//                 }
+
+//                 if(data==2){ //take left path
+//                   path=0;
+//                   break;
+//                   //do rest
+//                 }
+
+//                 if(data==3){  //take right bath
+//                   path=1 ;
+//                   break;// since we are already at left
+//                 }
+//                 }
+//         }
+       
+        
+//     }
+//     else{
+
+//       path = default_mode;
+//     }
+
+
+     //if(!client.connected()){
+          delay(5000);
+           DEGREE_TURN(180);
+                //client.write(2);  // record on right
+                delay(5000);
+          int path=0;
+
+      //  }
+
+ /*
+ PATH > 0: LEFT
+ PATH < 0: RIGHT
+ DEFAULT: SKIP (GO STRAIGHT)
+ */
+
+switch (path){
+
+
+
+  /*
+  CASE 0: TURN LEFT
+  */
+  case(0):
+
+  DEGREE_TURN(160);
+
+  delay(100);
+
+  MOVE_FORWARD(50,85,enc1,enc2);
+
+
+  do{
+
+    //MOVE_FORWARD(200,80,enc1,enc2);
+
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = 8*error + 1000*(error-last_error) + 0*total_error;
     int right_motor = 70 + pid_value;
     int left_motor = 70 - pid_value;
 
@@ -1026,7 +1095,7 @@ switch (path){
     error = pos - mid;
     total_error += error;
 
-    int pid_value = 8*error + 120*(error-last_error) + 0*total_error;
+    int pid_value = 8*error + 1000*(error-last_error) + 0*total_error;
     int right_motor = 70 + pid_value;
     int left_motor = 70 - pid_value;
 
@@ -1087,7 +1156,13 @@ void ENDOR_DASH(Encoder & enc1, Encoder & enc2){
   */
   //TILL_LINE_MOVE_FORWARD(255,enc1,enc2);
 
-  MOVE_FORWARD(5300,150,enc1,enc2);
+  
+  //DEGREE_TURN(-10);
+  
+  MOVE_FORWARD(1000,80,enc1,enc2);
+
+
+  MOVE_FORWARD(4700,90,enc1,enc2);
 
 
     M1_forward(90);
@@ -1282,7 +1357,7 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
 
   MODE_CHANGE_BLOCK_RIGHT(enc1, enc2);
 
-  MOVE_FORWARD(2,90,enc1,enc2);
+  MOVE_FORWARD(2,85,enc1,enc2);
 
   SKIP_MAZE(enc1, enc2);
 
@@ -1295,19 +1370,20 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
   MODE_CHANGE_BLOCK_RIGHT(enc1,enc2);
 
 
-  DUAL_FATES(ssid, password, server,enc1,enc2);
+  //delay(10000);
+
+  //0 : Left
+  DUAL_FATES(ssid, password, server,enc1,enc2,0);
 
   MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
 
-  MODE_1(90,6,120,0);
+  MODE_1(80,3,1000,0);
 
   
   MOVE_FORWARD(600,90,enc1, enc2);
 
 
   MODE_CHANGE_BLOCK_LEFT(enc1, enc2);
-
-  DEGREE_TURN(-10);
 
   ENDOR_DASH(enc1, enc2);
 
@@ -1316,8 +1392,6 @@ void PRIMARY(const char* ssid, const char* password, WiFiServer server, Encoder 
 
 
 void DO_MAZE(Encoder & enc1, Encoder & enc2, WiFiServer server){
-
-
 
 
 
@@ -1332,7 +1406,7 @@ Serial.print(server);
 
   MODE_2(14,90,4,300,0);
 
-  MAZE_FORWARD(enc1,enc2);
+  //MAZE_FORWARD(enc1,enc2);
 
 
   delay(5000);
@@ -1425,5 +1499,171 @@ Serial.print(server);
   M1_stop();
   M2_stop();
   delay(10000000);
+
+}
+
+
+/*
+MOVE FORWARD VIA PID CONTROL UNTIL THE ROBOT HITS A BLANK SPOT IN THE CENTER
+*/
+void MAZE_TO_NODE(Encoder & enc1, Encoder & enc2, int base_pid, int Kp, int Kd, int Ki){
+
+  readADCandConvert();
+
+
+  do{
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
+    int right_motor = base_pid + pid_value;
+    int left_motor = base_pid - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+
+  readADCandConvert();
+  }while(!(lineArray[5] && lineArray[6] && lineArray[7]));
+
+
+  MOVE_FORWARD(150,90,enc1,enc2);
+
+
+}
+
+
+
+void MOVE_TO_START_OF_MAZE(Encoder & enc1, Encoder & enc2, int base_pid, int Kp, int Kd, int Ki){
+
+  readADCandConvert();
+
+
+  do{
+    /*
+    RUN PID CONTROLLER
+    */
+   
+ // Serial.print("MODE_1\n");
+
+    int t_start = micros();
+    int t_end = micros();
+
+/*     long enc1_value = enc1.read();
+    long enc2_value = -1*enc2.read();
+
+    enc1.write(0);
+    enc2.write(0);
+ */
+    //enc1.readAndReset();
+
+    //enc2.readAndReset();
+    float pos = getPosition(previousPosition);
+    previousPosition = pos;
+
+    error = pos - mid;
+    total_error += error;
+
+    int pid_value = Ki*error + Kd*(error-last_error) + Ki*total_error;
+    int right_motor = base_pid + pid_value;
+    int left_motor = base_pid - pid_value;
+
+    M1_forward(left_motor);
+    M2_forward(right_motor);
+
+    /* Serial.print("time: \t"); Serial.print(t_end - t_start); Serial.print("\t");
+    Serial.print("pos: \t"); Serial.print(pos);Serial.print("right: \t"); Serial.print(right_motor); 
+    Serial.println(); */
+
+    last_error = error;
+
+
+  readADCandConvert();
+  }while(!(lineArray[0] && lineArray[1] && lineArray[2] && lineArray[3]));
+
+
+  MOVE_FORWARD(150,90,enc1,enc2);
+
+
+}
+
+
+void MAZE_RIGHT_LEFT_RIGHT(Encoder & enc1, Encoder & enc2, int base_pid){
+
+
+  //right turn
+  DEGREE_TURN(-90);
+
+  delay(200);
+
+  MOVE_FORWARD(200,95,enc1,enc2);
+
+  delay(200);
+
+
+  //left turn
+  DEGREE_TURN(90);
+
+  MOVE_FORWARD(200,95,enc1,enc2);
+
+
+  delay(200);
+  //right turn
+  DEGREE_TURN(-90);
+
+
+}
+
+
+void MAZE_LEFT_RIGHT_LEFT(Encoder & enc1, Encoder & enc2, int base_pid){
+
+
+  //left turn
+  DEGREE_TURN(90);
+
+  delay(200);
+
+  MOVE_FORWARD(200,95,enc1,enc2);
+
+  delay(200);
+
+
+  //right turn
+  DEGREE_TURN(-90);
+
+  MOVE_FORWARD(200,95,enc1,enc2);
+
+
+  delay(200);
+
+  //left turn
+  DEGREE_TURN(90);
 
 }
